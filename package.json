@@ -1,10 +1,13 @@
 {
   "name": "todo-vue-client",
   "version": "0.0.0",
+  "homepage": "https://sf4nu.github.io/todo-vue-go/",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -14,6 +17,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
+    "gh-pages": "^6.1.1",
     "vite": "^5.1.5"
   }
 }
