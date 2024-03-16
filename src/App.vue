@@ -15,6 +15,7 @@ import MainComponent from "./components/MainComponent.vue";
   --orange: #f77f00;
   --fire: #d62828;
   --prussian: #003049;
+  --electric-violet: #4e34e0;
 }
 
 /* * {

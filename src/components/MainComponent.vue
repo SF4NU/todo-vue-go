@@ -2,8 +2,11 @@
   <section class="main-section">
     <div class="main-div">
       <h3>Todo</h3>
-      <CategoriesComponent />
-      <img class="add-icon" src="./icons/add.svg" alt="add-new-icon" />
+      <div class="submit-div">
+        <input @keyup.enter="sendInput" v-model="userInput" type="text" />
+        <button @click="sendInput" type="button">Aggiungi</button>
+      </div>
+      <CategoriesComponent :sendUserInput="sendUserInput" />
     </div>
     <!-- <TasksComponent /> -->
   </section>
@@ -12,6 +15,17 @@
 <script setup>
 import TasksComponent from "./Tasks/TasksComponent.vue";
 import CategoriesComponent from "./Categories/CategoriesComponent.vue";
+import { ref } from "vue";
+import { getCurrentTime } from "../shared/getCurrentTime";
+
+const userInput = ref("");
+const sendUserInput = ref("");
+
+const sendInput = () => {
+  sendUserInput.value = userInput.value;
+  console.log(getCurrentTime());
+  userInput.value = "";
+};
 </script>
 
 <style scoped>
@@ -27,7 +41,7 @@ import CategoriesComponent from "./Categories/CategoriesComponent.vue";
 .main-div {
   height: 600px;
   width: clamp(280px, 50%, 350px);
-  background-color: var(--vanilla);
+  background-color: var(--electric-violet);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35,11 +49,21 @@ import CategoriesComponent from "./Categories/CategoriesComponent.vue";
   position: relative;
   box-shadow: 0px 0px 20px 5px rgba(0, 0, 0, 0.15);
 }
+.main-div::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  height: 60px;
+  width: 100%;
+  background-color: var(--electric-violet);
+  border-radius: 10px;
+}
 h3 {
   font-size: 2rem;
   user-select: none;
   -moz-user-select: none;
   -webkit-user-drag: none;
+  color: white;
 }
 .add-icon {
   position: absolute;
@@ -57,5 +81,42 @@ h3 {
 }
 .add-icon:active {
   scale: 0.95;
+}
+.submit-div {
+  display: flex;
+  column-gap: 10px;
+}
+.submit-div input {
+  box-sizing: border-box;
+  padding: 10px 0px;
+  border-radius: 20px;
+  border: none;
+  text-indent: 20px;
+  box-shadow: inset 3px 3px 5px rgba(0, 0, 0, 0.15);
+  font-family: Poppins;
+  font-weight: 500;
+  color: lightslategray;
+}
+.submit-div input:focus {
+  outline: none;
+}
+.submit-div button {
+  border-radius: 20px;
+  padding: 10px;
+  border: none;
+  font-family: Poppins;
+  font-weight: 500;
+  box-shadow: inset -5px -5px 5px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: scale 0.15s ease, opacity 0.15s ease;
+}
+.submit-div button:hover {
+  scale: 1.05;
+  opacity: 0.97;
+}
+.submit-div button:active {
+  scale: 0.95;
+  background-color: var(--electric-violet);
+  color: white;
 }
 </style>
