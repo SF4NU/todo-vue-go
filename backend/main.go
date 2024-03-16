@@ -131,6 +131,9 @@ func main() {
 		if updatedCategory.Title != "" {
 			category.Title = updatedCategory.Title
 		}
+		if updatedCategory.LastModified != "" {
+			category.LastModified = updatedCategory.LastModified
+		}
 
 		if err := db.Save(&category).Error; err != nil {
 			return err

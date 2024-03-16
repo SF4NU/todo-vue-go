@@ -1,22 +1,49 @@
 <template class="template">
   <div ref="scrollToTheBottom" class="category-div">
-    <div v-for="(category, i) in data" :key="i" class="sub-div-category">
-      <span v-if="checkInput" class="category-name">{{ category.title }}</span>
-      <!-- <input
-          v-else-if="!checkInput"
-          type="text"
-          v-model="category"
-          @keyup.enter="checkInput = !checkInput" /> -->
-      <div class="div-options">
-        <img class="options-icons" src="../icons/edit.svg" alt="" />
-        <img
-          @click="deleteCategory(category.ID, i)"
-          class="options-icons"
-          src="../icons/redbin.svg"
-          alt="" />
-        <img class="options-icons" src="../icons/arrow.svg" alt="" />
+    <div v-for="(category, i) in data" :key="i" :class="`sub-div-category`">
+      <div v-if="isEditing !== i" class="sub-div-wrapper">
+        <span class="category-name">{{ checkLength(category.title) }}</span>
+        <div class="div-options">
+          <img
+            @click="isEditingCategory(i)"
+            class="options-icons edit-icon"
+            src="../icons/edit.svg"
+            alt="" />
+          <img
+            @click="askToDelete(i)"
+            class="options-icons remove-category-icon"
+            src="../icons/redbin.svg"
+            alt="" />
+          <img
+            class="options-icons see-task-icon"
+            src="../icons/arrow.svg"
+            alt="" />
+        </div>
+        <span class="edit-time"
+          >Ultima modifica: {{ category.last_modified }}</span
+        >
       </div>
-      <span class="edit-time">Ultima modifica: 00:00</span>
+      <div v-else-if="isEditing === i && !isRemoving" class="edit-div">
+        <input class="edit-input" v-model="updatedTitle" type="text" />
+        <button class="edit-button" @click="editFinished(i, category.ID)">
+          Aggiorna
+        </button>
+      </div>
+      <div v-else class="remove-div">
+        <div>Stai per rimuovere "{{ checkLength(category.title) }}"</div>
+        <div>
+          <img
+            @click="deleteCategory(category.ID, i)"
+            class="tick-remove tick-icon"
+            src="../icons/tick.svg"
+            alt="" />
+          <img
+            @click="doNotDelete()"
+            class="tick-remove remove-icon"
+            src="../icons/remove.svg"
+            alt="" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -24,32 +51,85 @@
 <script setup>
 import axios from "axios";
 import { ref, onBeforeMount, onUnmounted, watch } from "vue";
+import { getCurrentTime } from "../../shared/getCurrentTime";
 
 const userProps = defineProps(["sendUserInput"]);
-
-let checkInput = ref(true);
-let category = ref("");
+let isEditing = ref(null);
 let data = ref(null);
 let watchVar = ref(0);
 const scrollToTheBottom = ref(null);
+let updatedTitle = ref("");
+let isRemoving = ref(false);
+
+let timeoutAddId = null;
+
+function checkLength(name) {
+  if (name.length > 8) {
+    return name.substring(0, 8) + "...";
+  }
+  return name;
+}
+
+const isEditingCategory = (id) => {
+  isEditing.value = id;
+};
+const editFinished = (index, id) => {
+  updateCategory(index, id);
+  isEditing.value = null;
+};
+
+const updateCategory = async (index, id) => {
+  if (updatedTitle.value !== "") {
+    try {
+      console.log("hello");
+      const updateCategoryTitle = {
+        title: updatedTitle.value,
+        last_modified: getCurrentTime(),
+      };
+      data.value[index] = updateCategoryTitle;
+
+      await axios.put(
+        `https://go-fiber-prova-production.up.railway.app/categories/${id}`,
+        {
+          title: updatedTitle.value,
+          last_modified: getCurrentTime(),
+        }
+      );
+      scroll();
+      updatedTitle.value = "";
+      fetchData();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
 
 const addCategory = async () => {
-  try {
-    console.log(userProps.sendUserInput);
-    const newCategoryTitle = {
-      title: userProps.sendUserInput,
-    };
-    data.value.push(newCategoryTitle);
-    const res = await axios.post(
-      `https://go-fiber-prova-production.up.railway.app/categories`,
-      {
+  if (userProps.sendUserInput !== "" && userProps.sendUserInput !== " ") {
+    try {
+      scroll();
+
+      console.log(userProps.sendUserInput);
+      const newCategoryTitle = {
         title: userProps.sendUserInput,
-      }
-    );
-    await fetchData();
-    console.log(res.status);
-  } catch (error) {
-    console.error(error);
+        last_modified: getCurrentTime(),
+      };
+      data.value.push(newCategoryTitle);
+      const res = await axios.post(
+        `https://go-fiber-prova-production.up.railway.app/categories`,
+        {
+          title: userProps.sendUserInput,
+          last_modified: getCurrentTime(),
+        }
+      );
+      timeoutAddId ? clearTimeout(timeoutAddId) : null;
+      timeoutAddId = await setTimeout(() => {
+        //aspetta prima di aggiornare di rimandare la richiesta GET nel caso l'utente stia ancora aggiungendo categorie
+        fetchData();
+      }, 5000);
+    } catch (error) {
+      console.error(error);
+    }
   }
 };
 
@@ -64,19 +144,34 @@ watch(
   () => userProps.sendUserInput,
   () => {
     addCategory();
-    scroll();
-    console.log("addcateor");
   }
 );
 
-const deleteCategory = async (id, index) => {
-  try {
-    data.value = data.value.filter((_, i) => i !== index);
+const askToDelete = (i) => {
+  isEditing.value = i;
+  isRemoving.value = true;
+};
 
+const doNotDelete = () => {
+  isEditing.value = null;
+  isRemoving.value = false;
+};
+
+let timeoutId = null;
+
+const deleteCategory = async (id, index) => {
+  // elimina la categoria selezionata
+  try {
+    isRemoving.value = false;
+    isEditing.value = null;
+    data.value = data.value.filter((_, i) => i !== index); //dato che ci vogliono 1-2 secondi per mandare request al server e riceverne un'altra ho pensato che è meglio aggiornare prima quello che vede l'user e lasciare fare le richieste in background così da non rallentare nessuno
     await axios.delete(
       `https://go-fiber-prova-production.up.railway.app/categories/${id}`
     );
-    watchVar.value++;
+    timeoutId ? clearTimeout(timeoutId) : null; // se viene schiacciato di nuovo il pulsante "deleteCategory" riparte il timer per evitare sovrapposizioni
+    timeoutId = await setTimeout(() => {
+      watchVar.value++; // quando questa variabile cambia riparte la funzione fetchData, il timer serve per quando vengono cancellate molto velocemente le categorie e quindi si evita il flash delle categorie che appaiono ogni volta che cambia watchVar
+    }, 5000);
   } catch (error) {
     console.error(error);
   }
@@ -129,8 +224,7 @@ watch(
   display: flex;
   align-items: center;
   text-indent: 10px;
-  border-left: 10px var(--fire) solid;
-  font-size: 16px;
+  font-size: 15px;
   scroll-snap-align: start;
   font-weight: 500;
   position: relative;
@@ -141,28 +235,33 @@ watch(
   font-family: Poppins;
   color: black;
   font-weight: 500;
-  font-size: 16px;
+  font-size: 15px;
 }
 .sub-div-category input:focus {
   outline: none;
 }
-/* .category-section {
-  width: 100%;
-  height: 340px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-} */
 .div-options {
   display: flex;
   align-items: center;
   justify-content: space-evenly;
   position: absolute;
-  right: 20px;
+  right: 10px;
 }
+.edit-icon:hover,
+.remove-category-icon:hover,
+.see-task-icon:hover {
+  scale: 1.1;
+  transition: scale 0.15s ease;
+}
+.edit-icon:active,
+.remove-category-icon:active,
+.see-task-icon:active {
+  scale: 0.9;
+  transition: scale 0.15s ease;
+}
+
 .options-icons {
-  height: 30px;
+  height: 25px;
   cursor: pointer;
 }
 .edit-time {
@@ -172,5 +271,74 @@ watch(
   position: absolute;
   right: 20px;
   bottom: 3px;
+}
+.sub-div-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.edit-input {
+  background-color: red;
+  width: 70%;
+  background-color: rgb(218, 218, 218);
+  height: 40px;
+  border-radius: 25px;
+}
+.edit-input:focus {
+  text-indent: 16px;
+}
+.edit-div {
+  display: flex;
+  column-gap: 15px;
+  margin-left: 10px;
+}
+.edit-button {
+  border: none;
+  background-color: var(--electric-violet);
+  color: white;
+  font-family: Poppins;
+  border-radius: 25px;
+  padding: 0px 10px;
+  margin-right: 5px;
+  cursor: pointer;
+  box-shadow: inset -5px -5px 5px rgba(0, 0, 0, 0.25);
+  transition: opacity 0.15s ease;
+}
+.edit-button:hover {
+  opacity: 0.9;
+}
+.edit-button:active {
+  scale: 0.95;
+}
+.tick-remove {
+  height: 40px;
+  cursor: pointer;
+}
+.remove-div {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-top: 10px;
+}
+.tick-icon {
+  transition: scale 0.15s ease;
+}
+.tick-icon:hover {
+  filter: contrast(1.5);
+}
+.remove-icon {
+  transform: rotate(45deg);
+  transition: transform 0.5s ease, scale 0.1s ease;
+}
+.remove-icon:hover {
+  transform: rotate(360deg);
+  filter: contrast(0.75);
+}
+.remove-icon:active,
+.tick-icon:active {
+  scale: 0.8;
 }
 </style>

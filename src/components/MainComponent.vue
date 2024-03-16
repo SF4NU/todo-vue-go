@@ -16,14 +16,12 @@
 import TasksComponent from "./Tasks/TasksComponent.vue";
 import CategoriesComponent from "./Categories/CategoriesComponent.vue";
 import { ref } from "vue";
-import { getCurrentTime } from "../shared/getCurrentTime";
 
 const userInput = ref("");
 const sendUserInput = ref("");
 
 const sendInput = () => {
   sendUserInput.value = userInput.value;
-  console.log(getCurrentTime());
   userInput.value = "";
 };
 </script>
