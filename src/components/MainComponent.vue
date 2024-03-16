@@ -2,23 +2,44 @@
   <section class="main-section">
     <div class="main-div">
       <h3>Todo</h3>
+
       <div class="submit-div">
         <input @keyup.enter="sendInput" v-model="userInput" type="text" />
         <button @click="sendInput" type="button">Aggiungi</button>
       </div>
-      <CategoriesComponent :sendUserInput="sendUserInput" />
+      <span v-if="!isSelected" class="sub-title-category">Categorie:</span>
+      <span v-else-if="isSelected" class="sub-title-category">Compiti:</span>
+
+      <CategoriesComponent
+        v-if="!isSelected"
+        :sendUserInput="sendUserInput"
+        @getIdFromComponent="getId" />
+      <TasksComponent
+        v-else-if="isSelected"
+        :categoryId="categoryId"
+        :sendUserInput="sendUserInput"
+        @backToCategories="backToCategories" />
     </div>
-    <!-- <TasksComponent /> -->
   </section>
 </template>
 
 <script setup>
 import TasksComponent from "./Tasks/TasksComponent.vue";
 import CategoriesComponent from "./Categories/CategoriesComponent.vue";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 
 const userInput = ref("");
 const sendUserInput = ref("");
+const getId = (id) => {
+  categoryId.value = id;
+  isSelected.value = true;
+};
+const backToCategories = () => {
+  isSelected.value = false;
+  categoryId.value = null;
+};
+const categoryId = ref(null);
+const isSelected = ref(false);
 
 const sendInput = () => {
   sendUserInput.value = userInput.value;
@@ -38,7 +59,7 @@ const sendInput = () => {
 }
 .main-div {
   height: 600px;
-  width: clamp(280px, 50%, 350px);
+  width: clamp(280px, 50%, 400px);
   background-color: var(--electric-violet);
   display: flex;
   flex-direction: column;
@@ -116,5 +137,12 @@ h3 {
   scale: 0.95;
   background-color: var(--electric-violet);
   color: white;
+}
+.sub-title-category {
+  position: absolute;
+  top: 165px;
+  font-size: 20px;
+  color: white;
+  font-weight: 600;
 }
 </style>

@@ -1,8 +1,11 @@
 <template class="template">
   <div ref="scrollToTheBottom" class="category-div">
-    <div v-for="(category, i) in data" :key="i" :class="`sub-div-category`">
+    <div
+      v-for="(category, i) in data"
+      :key="category.ID"
+      :class="`sub-div-category`">
       <div v-if="isEditing !== i" class="sub-div-wrapper">
-        <span class="category-name">{{ checkLength(category.title) }}</span>
+        <span class="category-name">{{ checkLength(category.title, 17) }}</span>
         <div class="div-options">
           <img
             @click="isEditingCategory(i)"
@@ -15,6 +18,7 @@
             src="../icons/redbin.svg"
             alt="" />
           <img
+            @click="$emit('getIdFromComponent', category.ID)"
             class="options-icons see-task-icon"
             src="../icons/arrow.svg"
             alt="" />
@@ -52,6 +56,7 @@
 import axios from "axios";
 import { ref, onBeforeMount, onUnmounted, watch } from "vue";
 import { getCurrentTime } from "../../shared/getCurrentTime";
+import { checkLength } from "../../shared/checkLength";
 
 const userProps = defineProps(["sendUserInput"]);
 let isEditing = ref(null);
@@ -62,13 +67,6 @@ let updatedTitle = ref("");
 let isRemoving = ref(false);
 
 let timeoutAddId = null;
-
-function checkLength(name) {
-  if (name.length > 8) {
-    return name.substring(0, 8) + "...";
-  }
-  return name;
-}
 
 const isEditingCategory = (id) => {
   isEditing.value = id;
@@ -81,7 +79,6 @@ const editFinished = (index, id) => {
 const updateCategory = async (index, id) => {
   if (updatedTitle.value !== "") {
     try {
-      console.log("hello");
       const updateCategoryTitle = {
         title: updatedTitle.value,
         last_modified: getCurrentTime(),
@@ -95,7 +92,6 @@ const updateCategory = async (index, id) => {
           last_modified: getCurrentTime(),
         }
       );
-      scroll();
       updatedTitle.value = "";
       fetchData();
     } catch (error) {
@@ -109,7 +105,6 @@ const addCategory = async () => {
     try {
       scroll();
 
-      console.log(userProps.sendUserInput);
       const newCategoryTitle = {
         title: userProps.sendUserInput,
         last_modified: getCurrentTime(),
@@ -181,8 +176,7 @@ const fetchData = async () => {
     const res = await axios.get(
       "https://go-fiber-prova-production.up.railway.app/categories"
     );
-    data.value = res.data;
-    console.log("TADAM");
+    data.value = res.data.sort((a, b) => a.ID - b.ID);
   } catch (error) {
     console.error(error);
   }
@@ -197,13 +191,12 @@ onUnmounted(() => {
 watch(
   () => watchVar.value,
   () => {
-    console.log("changed");
     fetchData();
   }
 );
 </script>
 
-<style scoped>
+<style>
 .category-div {
   width: 90%;
   display: flex;
