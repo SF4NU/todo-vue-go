@@ -58,7 +58,7 @@ import { ref, onBeforeMount, onUnmounted, watch } from "vue";
 import { getCurrentTime } from "../../shared/getCurrentTime";
 import { checkLength } from "../../shared/checkLength";
 
-const userProps = defineProps(["sendUserInput"]);
+const userProps = defineProps(["sendUserInput", "userId"]);
 let isEditing = ref(null);
 let data = ref(null);
 let watchVar = ref(0);
@@ -115,6 +115,7 @@ const addCategory = async () => {
         {
           title: userProps.sendUserInput,
           last_modified: getCurrentTime(),
+          user_id: userProps.userId,
         }
       );
       timeoutAddId ? clearTimeout(timeoutAddId) : null;
@@ -174,7 +175,7 @@ const deleteCategory = async (id, index) => {
 const fetchData = async () => {
   try {
     const res = await axios.get(
-      "https://go-fiber-prova-production.up.railway.app/categories"
+      `https://go-fiber-prova-production.up.railway.app/users/${userProps.userId}/categories`
     );
     data.value = res.data.sort((a, b) => a.ID - b.ID);
   } catch (error) {

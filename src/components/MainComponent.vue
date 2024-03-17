@@ -1,21 +1,27 @@
 <template>
   <section class="main-section">
     <div class="main-div">
-      <h3>Todo</h3>
+      <h3 v-if="isLoggedIn">Todo</h3>
+      <UserAuth v-if="!isLoggedIn" @getUserId="getUserId" />
 
-      <div class="submit-div">
+      <div v-if="isLoggedIn" class="submit-div">
         <input @keyup.enter="sendInput" v-model="userInput" type="text" />
         <button @click="sendInput" type="button">Aggiungi</button>
       </div>
-      <span v-if="!isSelected" class="sub-title-category">Categorie:</span>
-      <span v-else-if="isSelected" class="sub-title-category">Compiti:</span>
+      <span v-if="!isSelected && isLoggedIn" class="sub-title-category"
+        >Categorie:</span
+      >
+      <span v-else-if="isSelected && isLoggedIn" class="sub-title-category"
+        >Compiti:</span
+      >
 
       <CategoriesComponent
-        v-if="!isSelected"
+        v-if="!isSelected && isLoggedIn"
         :sendUserInput="sendUserInput"
-        @getIdFromComponent="getId" />
+        @getIdFromComponent="getId"
+        :userId="userId" />
       <TasksComponent
-        v-else-if="isSelected"
+        v-else-if="isSelected && isLoggedIn"
         :categoryId="categoryId"
         :sendUserInput="sendUserInput"
         @backToCategories="backToCategories" />
@@ -26,7 +32,9 @@
 <script setup>
 import TasksComponent from "./Tasks/TasksComponent.vue";
 import CategoriesComponent from "./Categories/CategoriesComponent.vue";
-import { ref, watch } from "vue";
+import UserAuth from "./UserAuth/UserAuth.vue";
+
+import { ref } from "vue";
 
 const userInput = ref("");
 const sendUserInput = ref("");
@@ -40,6 +48,13 @@ const backToCategories = () => {
 };
 const categoryId = ref(null);
 const isSelected = ref(false);
+const isLoggedIn = ref(false);
+const userId = ref(null);
+
+const getUserId = (id) => {
+  userId.value = id;
+  isLoggedIn.value = true;
+};
 
 const sendInput = () => {
   sendUserInput.value = userInput.value;
@@ -56,6 +71,9 @@ const sendInput = () => {
   align-items: center;
   margin: auto;
   margin-top: 180px;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-drag: none;
 }
 .main-div {
   height: 600px;
