@@ -12,7 +12,9 @@
       <div
         v-if="isEditing !== i && !category.is_loading"
         class="sub-div-wrapper">
-        <span class="category-name">{{ checkLength(category.title, 17) }}</span>
+        <!--Ci sono 2 controlli: isEditing controlla se l'utente ha schiacciato sul pulsante per modificare il nome della categoria e category.is_loading è un campo che non esiste più all'interno della tabella categorie dato che mi sono accorto che non serviva cambiarla anche nel database, quindi di base category.is_loading è sempre falsa tranne quando specificato-->
+        <span class="category-name">{{ checkLength(category.title, 17) }}</span
+        ><!--checkLength spezza il nome della categoria se è più lunga di 17 caratteri-->
         <div class="div-options">
           <img
             @click="isEditingCategory(i)"
@@ -37,6 +39,7 @@
       <div
         v-else-if="isEditing === i && !isRemoving && !category.is_loading"
         class="edit-div">
+        <!--Ci sono 2 controlli: isEditing controlla se l'utente ha schiacciato sul pulsante per modificare il nome della categoria, isRemoving controlla se l'utente ha schiacciato sul pulsante per eliminare la categoria-->
         <input
           class="edit-input"
           v-model="updatedTitle"
@@ -73,8 +76,9 @@ import axios from "axios";
 import { ref, onBeforeMount, onUnmounted, watch } from "vue";
 import { getCurrentTime } from "../../shared/getCurrentTime";
 import { checkLength } from "../../shared/checkLength";
+import { scroll } from "../../shared/scroll";
 
-const userProps = defineProps(["sendUserInput", "userId"]);
+const userProps = defineProps(["sendUserInput", "userId"]); //sendUserInput è il contenuto dell'input per aggiungere nuove tabelle e userId è l'id dello user loggato ricevuto subito dopo il login
 let isEditing = ref(null);
 let data = ref(null);
 const scrollToTheBottom = ref(null);
@@ -82,18 +86,22 @@ let updatedTitle = ref("");
 let isRemoving = ref(false);
 
 const isEditingCategory = (id) => {
+  //controlla quale categoria è in corso di modifica
   isEditing.value = id;
 };
 const editFinished = (index, id) => {
+  //aggiorna il nome della categoria dopo che viene schiacciato il pulsante aggiorna
   updateCategory(index, id);
   isEditing.value = null;
 };
 
 const updateCategory = async (index, id) => {
+  //è la funzione del metodo PUT che prende il nuovo nome inserito nell'apposita casella di input
   if (updatedTitle.value !== "") {
     try {
-      data.value[index].is_loading = true;
+      data.value[index].is_loading = true; //isLoading viene impostato a vero così che possa partire l'animazione di caricamento
       setTimeout(() => {
+        //inizialmente il timeout era dopo il await del metodo put ma ci metteva troppo a mandare l'aggiornamento e poi liberare la variabile quindi con 300ms di timeout è quasi istantaneo e parte comunque la richiesta al server
         updatedTitle.value = "";
       }, 300);
       await axios.put(
@@ -103,7 +111,7 @@ const updateCategory = async (index, id) => {
           last_modified: getCurrentTime(),
         }
       );
-      fetchData();
+      fetchData(); //richiama fetchData quando ha finito di aggiornare il nome, inoltre isLoading viene impostato di nuovo su falso dato che non esiste più un isLoading nella tabella delle categorie
     } catch (error) {
       console.error(error);
     }
@@ -111,14 +119,16 @@ const updateCategory = async (index, id) => {
 };
 
 const addCategory = async () => {
+  //la funzione crea nuove categorie partendo dall'input dell'utente
   if (userProps.sendUserInput !== "" && userProps.sendUserInput !== " ") {
+    //l'if serve a verificare se c'è effettivamente qualcosa nell'input per non far partire una richiesta vuota
     try {
-      scroll();
+      scroll(); //una funzione scroll che serve a scrollare in basso dove si trova la categoria appena creata
 
       const newCategoryTitle = {
         is_loading: true,
       };
-      data.value.push(newCategoryTitle);
+      data.value.push(newCategoryTitle); //utilizza il push a differenza della funzione di update perché non c'è un index a cui fare riferimento
       const res = await axios.post(
         `https://go-fiber-prova-production.up.railway.app/categories`,
         {
@@ -127,69 +137,59 @@ const addCategory = async () => {
           user_id: userProps.userId,
         }
       );
-      fetchData();
+      fetchData(); //richiama fetchData quando ha finito di aggiornare il nome, inoltre isLoading viene impostato di nuovo su falso dato che non esiste più un isLoading nella tabella delle categorie
     } catch (error) {
       console.error(error);
     }
   }
 };
 
-const scroll = () => {
-  scrollToTheBottom.value.scrollTo({
-    top: scrollToTheBottom.value.scrollHeight,
-    behavior: "smooth",
-  });
-};
-
 watch(
-  () => userProps.sendUserInput,
+  () => userProps.sendUserInput, //questo watch controlla se l'input è cambiato, ma solo dopo che è stato inviato con un invio o con un click dato che cambia all'interno del componente main
   () => {
     addCategory();
   }
 );
 
 const askToDelete = (i) => {
+  //la funzione per il pulsante di conferma cancellazione
   isEditing.value = i;
   isRemoving.value = true;
 };
 
 const doNotDelete = () => {
+  //la funzione per il pulsante per rifiutare la cancellazione
   isEditing.value = null;
   isRemoving.value = false;
 };
 
 const deleteCategory = async (id, index) => {
-  // elimina la categoria selezionata
+  //si occupa di eliminare la categoria in base all'id, mentre l'index serve solo per sapere a quale div assegnare il caricamento
   try {
     isRemoving.value = false;
     isEditing.value = null;
     data.value[index].is_loading = true;
-    // data.value = data.value.filter((_, i) => i !== index); //dato che ci vogliono 1-2 secondi per mandare request al server e riceverne un'altra ho pensato che è meglio aggiornare prima quello che vede l'user e lasciare fare le richieste in background così da non rallentare nessuno
     await axios.delete(
       `https://go-fiber-prova-production.up.railway.app/categories/${id}`
     );
-    data.value[index].is_loading = false;
-
-    await fetchData();
+    await fetchData(); //richiama fetchData quando ha finito di aggiornare il nome, inoltre isLoading viene impostato di nuovo su falso dato che non esiste più un isLoading nella tabella delle categorie
   } catch (error) {
     console.error(error);
   }
 };
 const fetchData = async () => {
+  //la funzione che si occupa di recuperare le categorie ,relative all'utente, dal database
   try {
     const res = await axios.get(
       `https://go-fiber-prova-production.up.railway.app/users/${userProps.userId}/categories`
     );
-    data.value = res.data.sort((a, b) => a.ID - b.ID);
+    data.value = res.data.sort((a, b) => a.ID - b.ID); //ordina i dati ricevuti in base all'id
   } catch (error) {
     console.error(error);
   }
 };
 onBeforeMount(() => {
-  fetchData();
-});
-onUnmounted(() => {
-  data.value = null;
+  fetchData(); //si occupa di recuperare i dati appena il componente viene iniziato, penso che anche un onMounted avrebbe fatto la stessa cosa in questo caso
 });
 </script>
 

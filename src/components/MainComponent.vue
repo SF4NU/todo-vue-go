@@ -20,12 +20,16 @@
         :sendUserInput="sendUserInput"
         @getIdFromComponent="getId"
         :userId="userId"
-        @backToAuth="backToAuth" />
+        @backToAuth="
+          backToAuth
+        " /><!--Gli if controllano innanzitutto se l'utente è loggato (con isLoggedIn) dopodiché isSelected controlla se ha schiacciato sulla freccia che porta alle task relative alla categoria selezionata--><!--userId arriva dal componente di autenticazione,in pratica è l'id ricevuto in fase di login dello specifico user, con questo id si recuperano tutte le tabelle dello user loggato --><!--getIdFromComponent prende l'id della categoria per poi poterlo assegnare a categoryId e mandarlo alle task, lo fa utilizzando un $emit nel componente Tasks--><!--backToAuth serve semplicemente a fare il logout dello user-->
       <TasksComponent
         v-else-if="isSelected && isLoggedIn"
         :categoryId="categoryId"
         :sendUserInput="sendUserInput"
-        @backToCategories="backToCategories" />
+        @backToCategories="
+          backToCategories
+        " /><!--Se isSelected è true vengono mostrate le task--><!-- :categoryId si occupa di mandare l'id della categoria selezionata al componente Tasks per usarlo poi durante l'endpoint GET e trovare le task giuste--><!-- :sendUserInput si occupa di trasferire il testo presente nella casella di input alla relativa funzione che si occupa del metodo POST--><!--backToCategories serve a far tornare l'utente nella schermata delle categorie-->
     </div>
   </section>
 </template>
@@ -41,13 +45,15 @@ const userInput = ref("");
 const sendUserInput = ref("");
 const getId = (id) => {
   categoryId.value = id;
-  isSelected.value = true;
+  isSelected.value = true; //Se isSelected è true vengono mostrate le task
 };
 const backToCategories = () => {
+  //backToCategories serve a far tornare l'utente nella schermata delle categorie
   isSelected.value = false;
   categoryId.value = null;
 };
 const backToAuth = () => {
+  //backToAuth serve semplicemente a fare il logout dello user
   isLoggedIn.value = false;
   categoryId.value = null;
   userId.value = null;
@@ -64,6 +70,7 @@ const getUserId = (id) => {
 };
 
 const sendInput = () => {
+  //si occupa di mandare il testo estratto dall'input alla variabile che poi trasferisce al componente tasks il nome della nuova tabella
   sendUserInput.value = userInput.value;
   userInput.value = "";
 };
@@ -182,6 +189,9 @@ h3 {
   .main-div::after {
     height: 20px;
   }
+  .submit-div {
+    column-gap: 5px;
+  }
 }
 @media (min-width: 2500px) {
   .main-section {
@@ -202,7 +212,7 @@ h3 {
     height: 20px;
   }
   .submit-div input {
-    width: 60%;
+    width: 50%;
     margin-right: auto;
     margin-left: auto;
   }
@@ -210,6 +220,9 @@ h3 {
     width: 35%;
     margin-right: auto;
     margin-left: auto;
+  }
+  .submit-div {
+    column-gap: 5px;
   }
 }
 </style>

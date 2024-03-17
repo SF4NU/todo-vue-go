@@ -16,7 +16,6 @@ import MainComponent from "./components/MainComponent.vue";
 
 body {
   margin: 0;
-  font-family: NorthwestBold;
   background: rgb(209, 209, 209);
   background: radial-gradient(
     circle,

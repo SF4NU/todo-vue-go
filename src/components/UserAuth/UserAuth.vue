@@ -35,7 +35,7 @@
 <script setup>
 import { ref } from "vue";
 import axios from "axios";
-import { wait } from "@/shared/wait";
+import { wait } from "@/shared/wait"; //funziona che ho creato per aspettare prima di eseguire altre funzioni negli async
 
 const userNameReg = ref("");
 const passwordReg = ref("");
@@ -47,6 +47,7 @@ const loginButton = ref(null);
 const registerButton = ref(null);
 
 const createUser = async () => {
+  //la funzione asincrona si occupa di mandare all'api i dati per la registrazione raccolti con v-model, se la risposta da parte del server va a buon fine allora cambia il colore del pulsante e la scritta per dare un feedback all'utente, se invece qualcosa va storto (utente già esiistente) allora il pulsante diventa rosso con l'apposita scritta, ripristina il contenuto delle variabili alla fine
   if (userNameReg.value !== "" && passwordReg.value !== "") {
     try {
       const res = await axios.post(
@@ -83,6 +84,7 @@ const createUser = async () => {
   }
 };
 const login = async (emit) => {
+  //la funzione asincrona si occupa di mandare all'api i dati per il login raccolti con v-model, se la risposta da parte del server va a buon fine allora cambia il colore del pulsante e la scritta per dare un feedback all'utente, se invece qualcosa va storto (nome utente o password incorretti ) allora il pulsante diventa rosso con l'apposita scritta, ripristina il contenuto delle variabili alla fine, inoltre la funzione si occupa anche di fare un emit e quindi di trasmettere al MainComponent che è avvenuto il login, (inserendo anche l'id dello user ricevuto come risposta dal server)
   if (userNameLog.value !== "" && passwordLog.value !== "") {
     try {
       const res = await axios.post(

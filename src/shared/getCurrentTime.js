@@ -6,3 +6,4 @@ export const getCurrentTime = () => {
   const formattedDate = computed(() => format(currentDate, "dd/MM - HH:mm"));
   return formattedDate.value;
 };
+//utilizza la libreria date-fns per formattare  la data e l'ora, inoltre utilizza l'ora corrente

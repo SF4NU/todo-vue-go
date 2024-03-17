@@ -5,3 +5,4 @@ export const wait = (ms) => {
     }, ms);
   });
 };
+//una promessa che serve come timer all'interno delle funzioni async/await
