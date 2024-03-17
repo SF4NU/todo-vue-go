@@ -4,10 +4,6 @@
 ### Frontend Vue.js
 
 Il frontend l'ho realizzato interamente con il framework Vue.js 
-L'applicazione consente di fare una semplice registrazione:
-
-![Immagine 2024-03-17 183423](https://github.com/SF4NU/todo-vue-go/assets/129513838/7991965c-07f9-4b00-8523-1a5ab2355cff)
----
 Permette a ciascun utente di avere le proprie categorie e task che può aggiungere con l'apposito input in alto:
 
 ![Immagine 2024-03-17 183522](https://github.com/SF4NU/todo-vue-go/assets/129513838/3a95ecd3-b1fb-4e69-9893-eda39a3fe4c5)
