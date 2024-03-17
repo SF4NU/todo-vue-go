@@ -177,7 +177,10 @@ h3 {
     margin-top: 25px;
   }
   .main-div {
-    height: 450px;
+    height: 500px;
+  }
+  .main-div::after {
+    height: 20px;
   }
 }
 @media (min-width: 2500px) {
@@ -194,6 +197,19 @@ h3 {
   }
   .main-div {
     height: 530px;
+  }
+  .main-div::after {
+    height: 20px;
+  }
+  .submit-div input {
+    width: 60%;
+    margin-right: auto;
+    margin-left: auto;
+  }
+  .submit-div button {
+    width: 35%;
+    margin-right: auto;
+    margin-left: auto;
   }
 }
 </style>

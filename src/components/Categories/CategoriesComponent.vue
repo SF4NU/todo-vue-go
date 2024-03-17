@@ -37,7 +37,11 @@
       <div
         v-else-if="isEditing === i && !isRemoving && !category.is_loading"
         class="edit-div">
-        <input class="edit-input" v-model="updatedTitle" type="text" />
+        <input
+          class="edit-input"
+          v-model="updatedTitle"
+          @keyup.enter="editFinished(i, category.ID)"
+          type="text" />
         <button class="edit-button" @click="editFinished(i, category.ID)">
           Aggiorna
         </button>

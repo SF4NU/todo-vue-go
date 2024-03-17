@@ -32,7 +32,11 @@
       <div
         v-else-if="isEditing === i && !isRemoving && !task.is_loading"
         class="edit-div">
-        <input class="edit-input" v-model="updatedDescription" type="text" />
+        <input
+          class="edit-input"
+          v-model="updatedDescription"
+          @keyup.enter="editFinished(i, task.ID)"
+          type="text" />
         <button class="edit-button" @click="editFinished(i, task.ID)">
           Aggiorna
         </button>

@@ -7,7 +7,11 @@
         <input
           v-model="passwordReg"
           type="password"
-          placeholder="Password" /><button @click="createUser">Sign-up</button>
+          placeholder="Password" /><button
+          ref="registerButton"
+          @click="createUser">
+          {{ signUp }}
+        </button>
       </form>
     </div>
 
@@ -18,8 +22,10 @@
         <input
           v-model="passwordLog"
           type="password"
-          placeholder="Password" /><button @click="login($emit)">
-          Sign-in
+          placeholder="Password" /><button
+          ref="loginButton"
+          @click="login($emit)">
+          {{ signIn }}
         </button>
       </form>
     </div>
@@ -29,47 +35,87 @@
 <script setup>
 import { ref } from "vue";
 import axios from "axios";
+import { wait } from "@/shared/wait";
 
 const userNameReg = ref("");
 const passwordReg = ref("");
 const userNameLog = ref("");
 const passwordLog = ref("");
+const signIn = ref("Sign-In");
+const signUp = ref("Sign-Up");
+const loginButton = ref(null);
+const registerButton = ref(null);
 
 const createUser = async () => {
-  try {
-    const res = await axios.post(
-      "https://go-fiber-prova-production.up.railway.app/registration",
-      {
-        username: userNameReg.value,
-        password: passwordReg.value,
-      }
-    );
+  if (userNameReg.value !== "" && passwordReg.value !== "") {
+    try {
+      const res = await axios.post(
+        "https://go-fiber-prova-production.up.railway.app/registration",
+        {
+          username: userNameReg.value,
+          password: passwordReg.value,
+        }
+      );
+      userNameReg.value = "";
+      passwordReg.value = "";
 
-    userNameReg.value = "";
-    passwordReg.value = "";
-  } catch (error) {
-    console.error(error);
+      if (res.status >= 200 || res.status <= 209) {
+        registerButton.value.style.backgroundColor = "#3BD571";
+        registerButton.value.style.color = "black";
+        signUp.value = "Account Creato";
+      }
+      await wait(3000);
+      registerButton.value.style.backgroundColor = "white";
+      registerButton.value.style.color = "black";
+      signUp.value = "Sign-up";
+    } catch (error) {
+      console.error(error);
+      userNameReg.value = "";
+      passwordReg.value = "";
+      registerButton.value.style.backgroundColor = "red";
+      registerButton.value.style.color = "white";
+      signUp.value = "Nome utente già esistente!";
+      await wait(3000);
+      registerButton.value.style.backgroundColor = "white";
+      registerButton.value.style.color = "black";
+      signUp.value = "Sign-up";
+    }
   }
 };
 const login = async (emit) => {
-  try {
-    console.log(userNameLog.value);
-    console.log(passwordLog.value);
-    const res = await axios.post(
-      "https://go-fiber-prova-production.up.railway.app/login",
-      {
-        username: userNameLog.value,
-        password: passwordLog.value,
+  if (userNameLog.value !== "" && passwordLog.value !== "") {
+    try {
+      const res = await axios.post(
+        "https://go-fiber-prova-production.up.railway.app/login",
+        {
+          username: userNameLog.value,
+          password: passwordLog.value,
+        }
+      );
+      if (res.status >= 200 || res.status <= 209) {
+        emit("getUserId", res.data.user_id);
+        loginButton.value.style.backgroundColor = "#3BD571";
+        loginButton.value.style.color = "black";
+        signIn.value = "Login effettuato!";
       }
-    );
-    if (res.status >= 200 || res.status <= 209) {
-      emit("getUserId", res.data.user_id);
+      userNameLog.value = "";
+      passwordLog.value = "";
+      await wait(3000);
+      loginButton.value.style.backgroundColor = "white";
+      loginButton.value.style.color = "black";
+      signIn.value = "Sign-In";
+    } catch (error) {
+      console.error(error);
+      userNameLog.value = "";
+      passwordLog.value = "";
+      loginButton.value.style.backgroundColor = "red";
+      loginButton.value.style.color = "white";
+      signIn.value = "Credenziali sbagliate!";
+      await wait(3000);
+      loginButton.value.style.backgroundColor = "white";
+      loginButton.value.style.color = "black";
+      signIn.value = "Sign-In";
     }
-
-    userNameLog.value = "";
-    passwordLog.value = "";
-  } catch (error) {
-    console.error(error);
   }
 };
 </script>
@@ -97,9 +143,10 @@ const login = async (emit) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  row-gap: 20px;
+  row-gap: 10px;
 }
 .user-auth-div input {
+  width: 80%;
   padding: 10px 10px;
   border-radius: 40px;
   border: none;
