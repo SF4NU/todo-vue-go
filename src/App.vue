@@ -10,17 +10,9 @@ import MainComponent from "./components/MainComponent.vue";
 
 <style>
 :root {
-  --vanilla: #eae2b7;
-  --xanthous: #fcbf49;
-  --orange: #f77f00;
   --fire: #d62828;
-  --prussian: #003049;
   --electric-violet: #4e34e0;
 }
-
-/* * {
-  outline: 1px solid red;
-} */
 
 body {
   margin: 0;

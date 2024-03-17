@@ -19,7 +19,8 @@
         v-if="!isSelected && isLoggedIn"
         :sendUserInput="sendUserInput"
         @getIdFromComponent="getId"
-        :userId="userId" />
+        :userId="userId"
+        @backToAuth="backToAuth" />
       <TasksComponent
         v-else-if="isSelected && isLoggedIn"
         :categoryId="categoryId"
@@ -45,6 +46,12 @@ const getId = (id) => {
 const backToCategories = () => {
   isSelected.value = false;
   categoryId.value = null;
+};
+const backToAuth = () => {
+  isLoggedIn.value = false;
+  categoryId.value = null;
+  userId.value = null;
+  isSelected.value = false;
 };
 const categoryId = ref(null);
 const isSelected = ref(false);
@@ -74,6 +81,7 @@ const sendInput = () => {
   user-select: none;
   -moz-user-select: none;
   -webkit-user-drag: none;
+  position: relative;
 }
 .main-div {
   height: 600px;
@@ -162,5 +170,30 @@ h3 {
   font-size: 20px;
   color: white;
   font-weight: 600;
+}
+
+@media (min-width: 250px) and (max-width: 1450px) and (max-height: 600px) {
+  .main-section {
+    margin-top: 25px;
+  }
+  .main-div {
+    height: 450px;
+  }
+}
+@media (min-width: 2500px) {
+  .main-section {
+    margin-top: 300px;
+  }
+  .main-div {
+    scale: 1.5;
+  }
+}
+@media (min-height: 600.5px) and (max-height: 860px) {
+  .main-section {
+    margin-top: 50px;
+  }
+  .main-div {
+    height: 530px;
+  }
 }
 </style>

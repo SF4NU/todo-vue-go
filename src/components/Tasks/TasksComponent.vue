@@ -6,7 +6,7 @@
       src="../icons/back-arrow.svg"
       alt="" />
     <div v-for="(task, i) in data" :key="i" :class="`sub-div-category`">
-      <div v-if="isEditing !== i" class="sub-div-wrapper">
+      <div v-if="isEditing !== i && !task.is_loading" class="sub-div-wrapper">
         <span class="category-name">{{
           checkLength(task.description, 20)
         }}</span>
@@ -29,13 +29,15 @@
         </div>
         <span class="edit-time">Ultima modifica: {{ task.last_modified }}</span>
       </div>
-      <div v-else-if="isEditing === i && !isRemoving" class="edit-div">
+      <div
+        v-else-if="isEditing === i && !isRemoving && !task.is_loading"
+        class="edit-div">
         <input class="edit-input" v-model="updatedDescription" type="text" />
         <button class="edit-button" @click="editFinished(i, task.ID)">
           Aggiorna
         </button>
       </div>
-      <div v-else class="remove-div">
+      <div v-else-if="!task.is_loading" class="remove-div">
         <div>Stai per rimuovere "{{ checkLength(task.description, 10) }}"</div>
         <div>
           <img
@@ -49,6 +51,9 @@
             src="../icons/remove.svg"
             alt="" />
         </div>
+      </div>
+      <div v-else class="loader-wrapper">
+        <div class="loader"></div>
       </div>
     </div>
   </div>
@@ -84,16 +89,9 @@ const checkBox = (i, id, des) => {
   }
 };
 
-let timeoutCompleteId = null;
-
 const completeTask = async (index, id, check, des) => {
   try {
-    const completeTask = {
-      description: des,
-      completed: check,
-      last_modified: getCurrentTime(),
-    };
-    data.value[index] = completeTask;
+    data.value[index].is_loading = true;
     await axios.put(
       `https://go-fiber-prova-production.up.railway.app/tasks/${id}`,
       {
@@ -102,12 +100,7 @@ const completeTask = async (index, id, check, des) => {
         last_modified: getCurrentTime(),
       }
     );
-    timeoutCompleteId ? clearTimeout(timeoutCompleteId) : null;
-    timeoutCompleteId = await setTimeout(() => {
-      fetchData();
-    }, 3000);
-
-    fetchData();
+    await fetchData();
   } catch (error) {
     console.error(error);
   }
@@ -124,13 +117,11 @@ const editFinished = (index, id) => {
 const updateTask = async (index, id) => {
   if (updatedDescription.value !== "") {
     try {
-      const updateTaskDescription = {
-        description: updatedDescription.value,
-        completed: false,
-        last_modified: getCurrentTime(),
-      };
-      data.value[index] = updateTaskDescription;
+      data.value[index].is_loading = true;
 
+      setTimeout(() => {
+        updatedDescription.value = ""; //inizialmente era dopo il await del metodo put ma ci metteva troppo a mandare l'aggiornamento e poi liberare la variabile quindi con 300ms di timeout è quasi istantaneo e parte comunque la risposta
+      }, 300);
       await axios.put(
         `https://go-fiber-prova-production.up.railway.app/tasks/${id}`,
         {
@@ -139,8 +130,7 @@ const updateTask = async (index, id) => {
           last_modified: getCurrentTime(),
         }
       );
-      updatedDescription.value = "";
-      fetchData();
+      await fetchData();
     } catch (error) {
       console.error(error);
     }
@@ -162,14 +152,10 @@ const addTask = async () => {
   if (props.sendUserInput !== "" && props.sendUserInput !== " ") {
     try {
       scroll();
-
-      const newTaskDescription = {
-        description: props.sendUserInput,
-        last_modified: getCurrentTime(),
-        completed: false,
-        category_id: props.categoryId,
+      const newTaskLoadingState = {
+        is_loading: true,
       };
-      data.value.push(newTaskDescription);
+      data.value.push(newTaskLoadingState);
       const res = await axios.post(
         `https://go-fiber-prova-production.up.railway.app/tasks`,
         {
@@ -179,11 +165,7 @@ const addTask = async () => {
           category_id: props.categoryId,
         }
       );
-      timeoutAddId ? clearTimeout(timeoutAddId) : null;
-      timeoutAddId = await setTimeout(() => {
-        //aspetta prima di aggiornare di rimandare la richiesta GET nel caso l'utente stia ancora aggiungendo categorie
-        fetchData();
-      }, 2000);
+      await fetchData();
     } catch (error) {
       console.error(error);
     }
@@ -207,14 +189,13 @@ const deleteTask = async (id, index) => {
   try {
     isRemoving.value = false;
     isEditing.value = null;
-    data.value = data.value.filter((_, i) => i !== index); //dato che ci vogliono 1-2 secondi per mandare request al server e riceverne un'altra ho pensato che è meglio aggiornare prima quello che vede l'user e lasciare fare le richieste in background così da non rallentare nessuno
+    data.value[index].is_loading = true;
+
+    // data.value = data.value.filter((_, i) => i !== index); //dato che ci vogliono 1-2 secondi per mandare request al server e riceverne un'altra ho pensato che è meglio aggiornare prima quello che vede l'user e lasciare fare le richieste in background così da non rallentare nessuno
     await axios.delete(
       `https://go-fiber-prova-production.up.railway.app/tasks/${id}`
     );
-    timeoutId ? clearTimeout(timeoutId) : null; // se viene schiacciato di nuovo il pulsante "deleteCategory" riparte il timer per evitare sovrapposizioni
-    timeoutId = await setTimeout(() => {
-      watchVar.value++; // quando questa variabile cambia riparte la funzione fetchData, il timer serve per quando vengono cancellate molto velocemente le task e quindi si evita il flash delle categorie che appaiono ogni volta che cambia watchVar
-    }, 5000);
+    await fetchData();
   } catch (error) {
     console.error(error);
   }
@@ -262,7 +243,7 @@ const scroll = () => {
   border: 1px solid black;
   cursor: pointer;
   position: relative;
-  /* overflow: hidden; */
+  overflow: hidden;
 }
 .checkbox-animate::after {
   content: "";
@@ -292,11 +273,5 @@ const scroll = () => {
     transform: translate(0px, 0px);
     scale: 0.8;
   }
-}
-
-/* .checkbox-clicked {
-  background-color: yellowgreen;
-} */
-@keyframes identifier {
 }
 </style>

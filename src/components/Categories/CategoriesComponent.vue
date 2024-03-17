@@ -1,10 +1,17 @@
 <template class="template">
   <div ref="scrollToTheBottom" class="category-div">
+    <img
+      @click="$emit('backToAuth')"
+      class="backToCategories"
+      src="../icons/back-arrow.svg"
+      alt="" />
     <div
       v-for="(category, i) in data"
       :key="category.ID"
       :class="`sub-div-category`">
-      <div v-if="isEditing !== i" class="sub-div-wrapper">
+      <div
+        v-if="isEditing !== i && !category.is_loading"
+        class="sub-div-wrapper">
         <span class="category-name">{{ checkLength(category.title, 17) }}</span>
         <div class="div-options">
           <img
@@ -27,13 +34,15 @@
           >Ultima modifica: {{ category.last_modified }}</span
         >
       </div>
-      <div v-else-if="isEditing === i && !isRemoving" class="edit-div">
+      <div
+        v-else-if="isEditing === i && !isRemoving && !category.is_loading"
+        class="edit-div">
         <input class="edit-input" v-model="updatedTitle" type="text" />
         <button class="edit-button" @click="editFinished(i, category.ID)">
           Aggiorna
         </button>
       </div>
-      <div v-else class="remove-div">
+      <div v-else-if="!category.is_loading" class="remove-div">
         <div>Stai per rimuovere "{{ checkLength(category.title) }}"</div>
         <div>
           <img
@@ -48,6 +57,9 @@
             alt="" />
         </div>
       </div>
+      <div v-else class="loader-wrapper">
+        <div class="loader"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -61,12 +73,9 @@ import { checkLength } from "../../shared/checkLength";
 const userProps = defineProps(["sendUserInput", "userId"]);
 let isEditing = ref(null);
 let data = ref(null);
-let watchVar = ref(0);
 const scrollToTheBottom = ref(null);
 let updatedTitle = ref("");
 let isRemoving = ref(false);
-
-let timeoutAddId = null;
 
 const isEditingCategory = (id) => {
   isEditing.value = id;
@@ -79,12 +88,10 @@ const editFinished = (index, id) => {
 const updateCategory = async (index, id) => {
   if (updatedTitle.value !== "") {
     try {
-      const updateCategoryTitle = {
-        title: updatedTitle.value,
-        last_modified: getCurrentTime(),
-      };
-      data.value[index] = updateCategoryTitle;
-
+      data.value[index].is_loading = true;
+      setTimeout(() => {
+        updatedTitle.value = "";
+      }, 300);
       await axios.put(
         `https://go-fiber-prova-production.up.railway.app/categories/${id}`,
         {
@@ -92,7 +99,6 @@ const updateCategory = async (index, id) => {
           last_modified: getCurrentTime(),
         }
       );
-      updatedTitle.value = "";
       fetchData();
     } catch (error) {
       console.error(error);
@@ -106,8 +112,7 @@ const addCategory = async () => {
       scroll();
 
       const newCategoryTitle = {
-        title: userProps.sendUserInput,
-        last_modified: getCurrentTime(),
+        is_loading: true,
       };
       data.value.push(newCategoryTitle);
       const res = await axios.post(
@@ -118,11 +123,7 @@ const addCategory = async () => {
           user_id: userProps.userId,
         }
       );
-      timeoutAddId ? clearTimeout(timeoutAddId) : null;
-      timeoutAddId = await setTimeout(() => {
-        //aspetta prima di aggiornare di rimandare la richiesta GET nel caso l'utente stia ancora aggiungendo categorie
-        fetchData();
-      }, 5000);
+      fetchData();
     } catch (error) {
       console.error(error);
     }
@@ -153,21 +154,19 @@ const doNotDelete = () => {
   isRemoving.value = false;
 };
 
-let timeoutId = null;
-
 const deleteCategory = async (id, index) => {
   // elimina la categoria selezionata
   try {
     isRemoving.value = false;
     isEditing.value = null;
-    data.value = data.value.filter((_, i) => i !== index); //dato che ci vogliono 1-2 secondi per mandare request al server e riceverne un'altra ho pensato che è meglio aggiornare prima quello che vede l'user e lasciare fare le richieste in background così da non rallentare nessuno
+    data.value[index].is_loading = true;
+    // data.value = data.value.filter((_, i) => i !== index); //dato che ci vogliono 1-2 secondi per mandare request al server e riceverne un'altra ho pensato che è meglio aggiornare prima quello che vede l'user e lasciare fare le richieste in background così da non rallentare nessuno
     await axios.delete(
       `https://go-fiber-prova-production.up.railway.app/categories/${id}`
     );
-    timeoutId ? clearTimeout(timeoutId) : null; // se viene schiacciato di nuovo il pulsante "deleteCategory" riparte il timer per evitare sovrapposizioni
-    timeoutId = await setTimeout(() => {
-      watchVar.value++; // quando questa variabile cambia riparte la funzione fetchData, il timer serve per quando vengono cancellate molto velocemente le categorie e quindi si evita il flash delle categorie che appaiono ogni volta che cambia watchVar
-    }, 5000);
+    data.value[index].is_loading = false;
+
+    await fetchData();
   } catch (error) {
     console.error(error);
   }
@@ -188,13 +187,6 @@ onBeforeMount(() => {
 onUnmounted(() => {
   data.value = null;
 });
-
-watch(
-  () => watchVar.value,
-  () => {
-    fetchData();
-  }
-);
 </script>
 
 <style>
@@ -219,7 +211,6 @@ watch(
   align-items: center;
   text-indent: 10px;
   font-size: 15px;
-  scroll-snap-align: start;
   font-weight: 500;
   position: relative;
 }
@@ -334,5 +325,60 @@ watch(
 .remove-icon:active,
 .tick-icon:active {
   scale: 0.8;
+}
+.backToCategories {
+  position: absolute;
+  top: 25px;
+  left: 25px;
+  height: 35px;
+  cursor: pointer;
+  transition: scale 0.15s ease;
+}
+.backToCategories:hover {
+  filter: invert();
+}
+.backToCategories:active {
+  scale: 0.8;
+}
+.loader-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.loader {
+  width: 40px;
+  aspect-ratio: 1;
+  color: #f03355;
+  position: relative;
+  background: conic-gradient(from 134deg at top, currentColor 92deg, #0000 0)
+      top,
+    conic-gradient(from -46deg at bottom, currentColor 92deg, #0000 0) bottom;
+  background-size: 100% 50%;
+  background-repeat: no-repeat;
+  scale: 0.8;
+}
+.loader:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  --g: currentColor 14.5px, #0000 0 calc(100% - 14.5px), currentColor 0;
+  background: linear-gradient(45deg, var(--g)),
+    linear-gradient(-45deg, var(--g));
+  animation: l7 1s infinite cubic-bezier(0.3, 1, 0, 1);
+}
+@keyframes l7 {
+  33% {
+    inset: -10px;
+    transform: rotate(0deg);
+  }
+  66% {
+    inset: -10px;
+    transform: rotate(90deg);
+  }
+  100% {
+    inset: 0;
+    transform: rotate(90deg);
+  }
 }
 </style>

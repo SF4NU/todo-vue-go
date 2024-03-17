@@ -122,6 +122,7 @@ const login = async (emit) => {
   box-shadow: inset 5px 5px 5px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: opacity 0.15s ease, transform 0.15s ease, scale 0.15s ease;
+  font-family: Poppins, Arial;
 }
 .user-auth-div button:hover {
   opacity: 0.95;
