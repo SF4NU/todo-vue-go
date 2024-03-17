@@ -70,7 +70,6 @@ import { onBeforeMount, ref, watch } from "vue";
 import axios from "axios";
 import { getCurrentTime } from "@/shared/getCurrentTime";
 import { checkLength } from "../../shared/checkLength";
-import { scroll } from "../../shared/scroll";
 
 const props = defineProps(["categoryId", "sendUserInput"]);
 const data = ref(null);
@@ -222,6 +221,12 @@ watch(
     addTask();
   }
 );
+const scroll = () => {
+  scrollToTheBottom.value.scrollTo({
+    top: scrollToTheBottom.value.scrollHeight,
+    behavior: "smooth",
+  });
+}; //la funzione scrolla in basso nella sezione in cui viene inserito il ref="scrollToTheBottom"
 </script>
 
 <style scoped>

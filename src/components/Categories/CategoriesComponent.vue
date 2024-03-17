@@ -76,7 +76,6 @@ import axios from "axios";
 import { ref, onBeforeMount, onUnmounted, watch } from "vue";
 import { getCurrentTime } from "../../shared/getCurrentTime";
 import { checkLength } from "../../shared/checkLength";
-import { scroll } from "../../shared/scroll";
 
 const userProps = defineProps(["sendUserInput", "userId"]); //sendUserInput è il contenuto dell'input per aggiungere nuove tabelle e userId è l'id dello user loggato ricevuto subito dopo il login
 let isEditing = ref(null);
@@ -191,6 +190,12 @@ const fetchData = async () => {
 onBeforeMount(() => {
   fetchData(); //si occupa di recuperare i dati appena il componente viene iniziato, penso che anche un onMounted avrebbe fatto la stessa cosa in questo caso
 });
+const scroll = () => {
+  scrollToTheBottom.value.scrollTo({
+    top: scrollToTheBottom.value.scrollHeight,
+    behavior: "smooth",
+  });
+}; //la funzione scrolla in basso nella sezione in cui viene inserito il ref="scrollToTheBottom"
 </script>
 
 <style>

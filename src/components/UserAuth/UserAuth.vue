@@ -96,16 +96,9 @@ const login = async (emit) => {
       );
       if (res.status >= 200 || res.status <= 209) {
         emit("getUserId", res.data.user_id);
-        loginButton.value.style.backgroundColor = "#3BD571";
-        loginButton.value.style.color = "black";
-        signIn.value = "Login effettuato!";
       }
       userNameLog.value = "";
       passwordLog.value = "";
-      await wait(3000);
-      loginButton.value.style.backgroundColor = "white";
-      loginButton.value.style.color = "black";
-      signIn.value = "Sign-In";
     } catch (error) {
       console.error(error);
       userNameLog.value = "";
